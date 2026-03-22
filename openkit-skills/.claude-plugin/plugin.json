@@ -1,0 +1,8 @@
+{
+  "name": "openkit",
+  "description": "80+ developer tools as agent skills. Formatting, encoding, hashing, regex, UUID, CSV, colors, security, trading calculators, and more. Swiss army knife for AI agents.",
+  "author": {
+    "name": "OpenKit",
+    "email": "hello@openkit.tools"
+  }
+}
