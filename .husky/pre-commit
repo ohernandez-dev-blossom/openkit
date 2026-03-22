@@ -1,0 +1,74 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Pre-commit validations..."
+
+# 1. ESLint
+echo "📝 Running ESLint..."
+if ! pnpm run lint; then
+  echo ""
+  echo "❌ ESLint failed. Fix the errors and try again."
+  echo "Run: pnpm run lint"
+  exit 1
+fi
+echo "✅ ESLint passed"
+
+# 2. TypeScript type check
+echo "🔧 Running TypeScript check..."
+if ! pnpm exec tsc --noEmit; then
+  echo ""
+  echo "❌ TypeScript check failed. Fix type errors and try again."
+  echo "Run: pnpm exec tsc --noEmit"
+  exit 1
+fi
+echo "✅ TypeScript check passed"
+
+# 3. Production build
+echo "🏗️  Running production build..."
+if ! pnpm run build; then
+  echo ""
+  echo "❌ Build failed. Fix build errors and try again."
+  echo "Run: pnpm run build"
+  exit 1
+fi
+echo "✅ Build passed"
+
+# 4. Critical tests (faster than full suite)
+echo "🧪 Running critical tests..."
+if ! pnpm run test:critical; then
+  echo ""
+  echo "❌ Critical tests failed. Fix the tests and try again."
+  echo "Run: pnpm run test:critical"
+  exit 1
+fi
+echo "✅ Critical tests passed"
+
+# 5. Check pnpm-lock.yaml sync (existing validation)
+if git diff --cached --name-only | grep -q "package.json"; then
+  echo "📦 package.json changed, checking pnpm-lock.yaml..."
+
+  if ! pnpm install --frozen-lockfile --offline 2>/dev/null; then
+    echo ""
+    echo "❌ ERROR: pnpm-lock.yaml is out of sync with package.json"
+    echo ""
+    echo "Run: pnpm install"
+    echo "Then: git add pnpm-lock.yaml"
+    echo ""
+    exit 1
+  fi
+
+  if git diff --name-only | grep -q "pnpm-lock.yaml"; then
+    echo ""
+    echo "❌ ERROR: pnpm-lock.yaml was updated but not staged"
+    echo ""
+    echo "Run: git add pnpm-lock.yaml"
+    echo ""
+    exit 1
+  fi
+
+  echo "✅ pnpm-lock.yaml is in sync"
+fi
+
+echo ""
+echo "✅ All pre-commit checks passed!"
+echo ""

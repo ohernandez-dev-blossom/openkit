@@ -1,0 +1,39 @@
+name: Lockfile Check
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+
+jobs:
+  check-lockfile:
+    name: Verify pnpm-lock.yaml is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Check lockfile is in sync
+        run: |
+          pnpm install --frozen-lockfile
+
+          # Check if lockfile changed
+          if ! git diff --quiet pnpm-lock.yaml; then
+            echo "❌ ERROR: pnpm-lock.yaml is out of sync"
+            echo ""
+            echo "Run 'pnpm install' and commit the updated lockfile"
+            exit 1
+          fi
+
+          echo "✅ pnpm-lock.yaml is in sync"
